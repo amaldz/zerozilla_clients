@@ -2,19 +2,39 @@ const Model = require('../models/Model');
 
 module.exports.InsertAgency = async(req, res, next) => {
 
+    
     try {
         const Agency = await Model.InsertAgency(req.query)
-        const Client = await Model.InsertClient(req.query,Agency.insertedId)
 
-        res.status(200).json(
-        { 
-            "status": true, 
-            "agency_id": Agency.insertedId, 
-            "client_id": Client.insertedId, 
-            "client": Client.ops,
-            "agency": Agency.ops
+        if(Agency.insert){
+            const Client = await Model.InsertClient(req.query,Agency.insertedId)
+            if(Client.insert){
+                res.status(200).json(
+                    { 
+                        "status": true, 
+                        "agency_id": Agency.data.insertedId, 
+                        "client_id": Client.data.insertedId, 
+                        "client": Client.data.ops,
+                        "agency": Agency.data.ops
+                    }
+                    );
+            }else {
+                res.status(200).json(
+                    { 
+                        "status": false, 
+                        "error": Client.data
+                    }
+                    );
+            }
+            
+        }else {
+            res.status(200).json(
+                { 
+                    "status": false, 
+                    "error": Agency.data
+                }
+                );
         }
-        );
 
     } catch (e) {
         res.status(200).json({ "status": false, "data": 'Bad request!' });
@@ -26,15 +46,33 @@ module.exports.InsertClient = async(req, res, next) => {
     try {
         const Client = await Model.InsertClient(req.query)
 
-        res.status(200).json(
-        { 
-            "status": true, 
-            "agency_id": req.query.agency_id, 
-            "client_id": Client.insertedId, 
-            "client": Client.ops,
+        if (req.query.agency_id == undefined || req.query.agency_id == ""){
+            res.status(200).json(
+                { 
+                    "status": false, 
+                    "error": "Agency Id Should not be empty"
+                }
+                );
+        }else {
+            if(Client.insert){
+                res.status(200).json(
+                    { 
+                        "status": true, 
+                        "client_id": Client.data.insertedId, 
+                        "client": Client.data.ops,
+                    }
+                    );
+            }else {
+                res.status(200).json(
+                    { 
+                        "status": false, 
+                        "error": Client.data
+                    }
+                    );
+    
+            }
         }
-        );
-
+    
     } catch (e) {
         res.status(200).json({ "status": false, "data": 'Bad request!' });
     }
